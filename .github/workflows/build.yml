@@ -1,0 +1,33 @@
+name: Build for Raspberry Pi
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch: # 允许手动触发
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: armv7-unknown-linux-gnueabihf # 树莓派3B 32位目标
+
+      - name: Install Cross-Compilation Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-linux-gnueabihf
+
+      - name: Build
+        run: |
+          export CARGO_TARGET_ARMV7_UNKNOWN_LINUX_GNUEABIHF_LINKER=arm-linux-gnueabihf-gcc
+          cargo build --release --target armv7-unknown-linux-gnueabihf
+
+      - name: Upload Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: raspberry-pi-binary
+          path: target/armv7-unknown-linux-gnueabihf/release/[项目名称] 
