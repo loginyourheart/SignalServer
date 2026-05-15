@@ -1,4 +1,4 @@
-name: Build for Raspberry Pi 64bit
+name: Build for Raspberry Pi 64bit Musl
 
 on:
   push:
@@ -14,20 +14,18 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-unknown-linux-gnu # 修改为 64 位目标
+          targets: aarch64-unknown-linux-musl # 使用 musl 目标
 
-      - name: Install Cross-Compilation Tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu # 安装 64 位交叉编译器
+      - name: Install Cross
+        run: cargo install cross --git https://github.com/cross-rs/cross.git
 
       - name: Build
         run: |
-          export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc
-          cargo build --release --target aarch64-unknown-linux-gnu
+          # 使用 cross 进行静态编译
+          cross build --release --target aarch64-unknown-linux-musl
 
       - name: Upload Binary
         uses: actions/upload-artifact@v4
         with:
-          name: raspberry-pi-64bit-binary
-          path: target/aarch64-unknown-linux-gnu/release/
+          name: raspberry-pi-64bit-musl-binary
+          path: target/aarch64-unknown-linux-musl/release/
