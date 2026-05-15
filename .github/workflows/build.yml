@@ -30,4 +30,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: raspberry-pi-binary
-          path: target/armv7-unknown-linux-gnueabihf/release/signal_server
+          path: target/armv7-unknown-linux-gnueabihf/release/
