@@ -90,7 +90,7 @@ async fn main() {
             )
         );
     // 绑定地址
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3001));
+    let addr = SocketAddr::from(([0, 0, 0, 0], 9000));
     println!("Server running on http://{}", addr);
 
     // 启动服务器

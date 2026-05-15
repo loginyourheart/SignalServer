@@ -1,9 +1,9 @@
-name: Build for Raspberry Pi
+name: Build for Raspberry Pi 64bit
 
 on:
   push:
     branches: [ main, master ]
-  workflow_dispatch: # 允许手动触发
+  workflow_dispatch:
 
 jobs:
   build:
@@ -14,20 +14,20 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: armv7-unknown-linux-gnueabihf # 树莓派3B 32位目标
+          targets: aarch64-unknown-linux-gnu # 修改为 64 位目标
 
       - name: Install Cross-Compilation Tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc-arm-linux-gnueabihf
+          sudo apt-get install -y gcc-aarch64-linux-gnu # 安装 64 位交叉编译器
 
       - name: Build
         run: |
-          export CARGO_TARGET_ARMV7_UNKNOWN_LINUX_GNUEABIHF_LINKER=arm-linux-gnueabihf-gcc
-          cargo build --release --target armv7-unknown-linux-gnueabihf
+          export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc
+          cargo build --release --target aarch64-unknown-linux-gnu
 
       - name: Upload Binary
         uses: actions/upload-artifact@v4
         with:
-          name: raspberry-pi-binary
-          path: target/armv7-unknown-linux-gnueabihf/release/
+          name: raspberry-pi-64bit-binary
+          path: target/aarch64-unknown-linux-gnu/release/
