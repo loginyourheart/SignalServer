@@ -45,7 +45,14 @@
 | 跨平台编译 | ⚠️ 需 Node.js 环境 | ✅ GitHub Actions |
 | Docker 支持 | ✅ | ❌ 暂不支持 |
 
-## 🚀 快速开始
+## 📦 下载与安装
+
+### 从 Releases 下载（推荐）
+
+访问 [GitHub Releases 页面](https://github.com/loginyourheart/SignalServer/releases) 下载对应平台的预编译二进制文件：
+
+- **Windows:** `.zip` 文件，直接解压即可使用
+- **Linux/macOS:** `.tar.gz` 文件，解压后 `chmod +x peerjs-server-rs` 添加执行权限
 
 ### 编译
 
@@ -98,7 +105,7 @@ cargo build --release
 | macOS x86_64 | - | macOS Intel |
 | macOS ARM64 | - | macOS Apple Silicon (M1/M2/M3) |
 
-访问 [Actions 页面](https://github.com/loginyourheart/SignalServer/actions) 下载对应平台的二进制文件。
+访问 [Actions 页面](https://github.com/loginyourheart/SignalServer/actions) 下载开发版本，或访问 [Releases 页面](https://github.com/loginyourheart/SignalServer/releases) 下载稳定版本。
 
 ## 📚 工作原理
 

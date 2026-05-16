@@ -3,6 +3,8 @@ name: Build Multi-Platform
 on:
   push:
     branches: [ main, master ]
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 jobs:
@@ -17,67 +19,78 @@ jobs:
             os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             use-cross: true
-            artifact-name: linux-x86_64-glibc
+            artifact-name: peerjs-server-rs-linux-x86_64-glibc
+            binary-name: peerjs-server-rs
 
           - name: Linux x86_64 (musl)
             os: ubuntu-latest
             target: x86_64-unknown-linux-musl
             use-cross: true
-            artifact-name: linux-x86_64-musl
+            artifact-name: peerjs-server-rs-linux-x86_64-musl
+            binary-name: peerjs-server-rs
 
           - name: ARM v7 (glibc)
             os: ubuntu-latest
             target: armv7-unknown-linux-gnueabihf
             use-cross: true
-            artifact-name: armv7-glibc
+            artifact-name: peerjs-server-rs-armv7-glibc
+            binary-name: peerjs-server-rs
 
           - name: ARM v7 (musl)
             os: ubuntu-latest
             target: armv7-unknown-linux-musleabihf
             use-cross: true
-            artifact-name: armv7-musl
+            artifact-name: peerjs-server-rs-armv7-musl
+            binary-name: peerjs-server-rs
 
           - name: ARM64 (glibc)
             os: ubuntu-latest
             target: aarch64-unknown-linux-gnu
             use-cross: true
-            artifact-name: arm64-glibc
+            artifact-name: peerjs-server-rs-arm64-glibc
+            binary-name: peerjs-server-rs
 
           - name: ARM64 (musl)
             os: ubuntu-latest
             target: aarch64-unknown-linux-musl
             use-cross: true
-            artifact-name: arm64-musl
+            artifact-name: peerjs-server-rs-arm64-musl
+            binary-name: peerjs-server-rs
 
           - name: ARM v6 (glibc)
             os: ubuntu-latest
             target: arm-unknown-linux-gnueabihf
             use-cross: true
-            artifact-name: armv6-glibc
+            artifact-name: peerjs-server-rs-armv6-glibc
+            binary-name: peerjs-server-rs
 
           - name: Windows x86_64
             os: windows-latest
             target: x86_64-pc-windows-msvc
             use-cross: false
-            artifact-name: windows-x86_64
+            artifact-name: peerjs-server-rs-windows-x86_64
+            binary-name: peerjs-server-rs.exe
 
           - name: Windows x86
             os: windows-latest
             target: i686-pc-windows-msvc
             use-cross: false
-            artifact-name: windows-x86
+            artifact-name: peerjs-server-rs-windows-x86
+            binary-name: peerjs-server-rs.exe
 
           - name: macOS x86_64
             os: macos-latest
             target: x86_64-apple-darwin
             use-cross: false
-            artifact-name: macos-x86_64
+            artifact-name: peerjs-server-rs-macos-x86_64
+            binary-name: peerjs-server-rs
 
           - name: macOS ARM64
             os: macos-latest
             target: aarch64-apple-darwin
             use-cross: false
-            artifact-name: macos-arm64
+            artifact-name: peerjs-server-rs-macos-arm64
+            binary-name: peerjs-server-rs
 
     steps:
       - uses: actions/checkout@v4
@@ -99,16 +112,55 @@ jobs:
         if: "!matrix.use-cross"
         run: cargo build --release --target ${{ matrix.target }}
 
-      - name: Upload Binary (Linux/macOS)
-        if: matrix.os != 'windows-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.artifact-name }}
-          path: target/${{ matrix.target }}/release/peerjs-server-rs
+      - name: Prepare Artifact
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          cp "target/${{ matrix.target }}/release/${{ matrix.binary-name }}" "artifacts/"
 
-      - name: Upload Binary (Windows)
-        if: matrix.os == 'windows-latest'
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact-name }}
-          path: target/${{ matrix.target }}/release/peerjs-server-rs.exe
+          path: artifacts/
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Prepare Release Assets
+        run: |
+          mkdir -p release-assets
+          cd artifacts
+          for dir in peerjs-server-rs-*; do
+            if [ -d "$dir" ]; then
+              cd "$dir"
+              if [ -f "peerjs-server-rs.exe" ]; then
+                zip -r "../../release-assets/$dir.zip" "peerjs-server-rs.exe"
+              else
+                chmod +x "peerjs-server-rs"
+                tar -czf "../../release-assets/$dir.tar.gz" "peerjs-server-rs"
+              fi
+              cd ..
+            fi
+          done
+          cd ..
+          ls -la release-assets/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-assets/*
+          generate_release_notes: true
