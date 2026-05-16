@@ -20,7 +20,7 @@
 - **ICE 候选收集**：协助客户端收集公网和内网 IP 地址
 - **RESTful API**：提供 `/peerjs/id` 和 `/peerjs/peers` 端点
 - **多平台支持**：支持 x86_64、ARM 等多种架构
-- **命令行配置**：支持通过参数自定义端口
+- **配置文件支持**：支持 TOML 格式配置文件
 
 ## 🛠️ 技术栈
 
@@ -69,23 +69,62 @@ cargo build --release
 
 **Linux/macOS:**
 ```bash
-# 使用默认端口 9000
+# 使用默认配置（端口 9000，配置文件 config.toml）
 ./target/release/peerjs-server-rs
 
-# 使用自定义端口
+# 指定端口
 ./target/release/peerjs-server-rs -p 8080
-./target/release/peerjs-server-rs --port 8080
+
+# 指定配置文件
+./target/release/peerjs-server-rs -c /path/to/config.toml
 ```
 
 **Windows:**
 ```cmd
-# 使用默认端口 9000
+# 使用默认配置
 .\target\release\peerjs-server-rs.exe
 
-# 使用自定义端口
+# 指定端口
 .\target\release\peerjs-server-rs.exe -p 8080
-.\target\release\peerjs-server-rs.exe --port 8080
+
+# 指定配置文件
+.\target\release\peerjs-server-rs.exe -c C:\path\to\config.toml
 ```
+
+## ⚙️ 配置文件
+
+首次运行时，程序会自动在当前目录生成 `config.toml` 配置文件：
+
+```toml
+key = "peerjs"
+concurrent_limit = 5000
+path = "/peerjs"
+allow_discovery = false
+alive_timeout = 60000
+check_interval = 300
+cleanup_out_msgs = 10000
+expire_timeout = 5000
+```
+
+### 配置项说明
+
+| 配置项 | 默认值 | 说明 |
+|--------|--------|------|
+| `key` | `"peerjs"` | PeerJS 认证密钥，客户端连接时需要提供 |
+| `concurrent_limit` | `5000` | 最大并发连接数 |
+| `path` | `"/peerjs"` | API 路由路径 |
+| `allow_discovery` | `false` | 是否允许列出所有在线 Peer（`listAllPeers()` 功能） |
+| `alive_timeout` | `60000` | 客户端存活超时时间（毫秒） |
+| `check_interval` | `300` | 连接检查间隔（秒） |
+| `cleanup_out_msgs` | `10000` | 消息清理任务执行间隔（毫秒） |
+| `expire_timeout` | `5000` | 消息过期时间（毫秒） |
+
+### 命令行参数
+
+| 参数 | 默认值 | 说明 |
+|------|--------|------|
+| `-p, --port` | `9000` | 服务器监听端口 |
+| `-c, --config` | `config.toml` | 配置文件路径 |
 
 ## 🌐 支持的平台
 
