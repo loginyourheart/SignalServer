@@ -1,10 +1,18 @@
-# SignalServer
+# peerjs-server-rs
 
-🚀 一个高性能的 PeerJS 信令服务器，使用 Rust 语言实现。
+🚀 PeerJS Server 的 Rust 实现 - 高性能 WebRTC 信令服务器
 
 ## 📖 项目简介
 
-SignalServer 是一个开源的 WebSocket 信令服务器，专为 [PeerJS](https://github.com/peers/peerjs) 设计。它实现了 WebRTC 信令功能，使得浏览器之间可以通过 P2P 方式建立连接，无需中央服务器中转媒体数据。
+**peerjs-server-rs** 是 [PeerJS](https://github.com/peers/peerjs) 官方 Node.js 服务器的 Rust 语言实现。它提供 WebSocket 信令服务，使得浏览器之间可以通过 P2P 方式建立连接，无需中央服务器中转媒体数据。
+
+### 原作者说明
+
+> **原作者的 README 内容：**
+> 
+> peerjs server 本质上是一个 ws 通过交换2个 sdp
+> 
+> 信令服务器收集候选的 ip 列表(询问 tun 服务器知道自己公网 ip,内网 ip)
 
 ### 核心功能
 
@@ -24,8 +32,8 @@ SignalServer 是一个开源的 WebSocket 信令服务器，专为 [PeerJS](http
 
 ## 📦 与官方 peerjs-server 功能对比
 
-| 功能 | 官方 peerjs-server (Node.js) | SignalServer (Rust) |
-|------|-----------------------------|---------------------|
+| 功能 | 官方 peerjs-server (Node.js) | peerjs-server-rs (Rust) |
+|------|-----------------------------|-------------------------|
 | WebSocket 信令 | ✅ | ✅ |
 | REST API (`/peerjs/id`) | ✅ | ✅ |
 | REST API (`/peerjs/peers`) | ✅ | ✅ |
@@ -35,7 +43,7 @@ SignalServer 是一个开源的 WebSocket 信令服务器，专为 [PeerJS](http
 | Key 认证 | ✅ | ✅ |
 | 并发连接限制 | ✅ | ✅ |
 | 跨平台编译 | ⚠️ 需 Node.js 环境 | ✅ GitHub Actions |
-| Docker 支持 | ✅ | 🔜 计划中 |
+| Docker 支持 | ✅ | ❌ 暂不支持 |
 
 ## 🚀 快速开始
 
@@ -54,21 +62,11 @@ cargo build --release
 
 ```bash
 # 使用默认端口 9000
-./target/release/SignalServer
+./target/release/peerjs-server-rs
 
 # 使用自定义端口
-./target/release/SignalServer -p 8080
-./target/release/SignalServer --port 8080
-```
-
-### Docker 部署
-
-```bash
-# 构建镜像
-docker build -t signalserver .
-
-# 运行容器
-docker run -d -p 9000:9000 signalserver
+./target/release/peerjs-server-rs -p 8080
+./target/release/peerjs-server-rs --port 8080
 ```
 
 ## 🌐 GitHub Actions 多平台构建
