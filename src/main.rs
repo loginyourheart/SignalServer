@@ -27,6 +27,8 @@ mod services;
 struct Args {
     #[arg(short, long, default_value = "9000")]
     port: u16,
+    #[arg(short, long, default_value = "config.toml")]
+    config: String,
 }
 
 async fn get_id(State(state): State<AppState>) -> Html<String> {
@@ -44,10 +46,26 @@ async fn get_peers(
         Err(StatusCode::UNAUTHORIZED)
     }
 }
+
 #[tokio::main]
 async fn main() {
     let args = Args::parse();
-    let config = ServerConfig::default();
+    
+    let config = match ServerConfig::load_from_file(&args.config) {
+        Ok(cfg) => cfg,
+        Err(e) => {
+            eprintln!("Failed to load config: {}", e);
+            std::process::exit(1);
+        }
+    };
+    
+    println!("Server config:");
+    println!("  key: {}", config.key);
+    println!("  concurrent_limit: {}", config.concurrent_limit);
+    println!("  allow_discovery: {}", config.allow_discovery);
+    println!("  alive_timeout: {}ms", config.alive_timeout);
+    println!("  check_interval: {}s", config.check_interval);
+    
     let state = AppState {
         room: Arc::new(Room::new()),
         config,
