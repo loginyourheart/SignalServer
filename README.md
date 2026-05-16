@@ -60,6 +60,7 @@ cargo build --release
 
 ### 运行
 
+**Linux/macOS:**
 ```bash
 # 使用默认端口 9000
 ./target/release/peerjs-server-rs
@@ -67,6 +68,16 @@ cargo build --release
 # 使用自定义端口
 ./target/release/peerjs-server-rs -p 8080
 ./target/release/peerjs-server-rs --port 8080
+```
+
+**Windows:**
+```cmd
+# 使用默认端口 9000
+.\target\release\peerjs-server-rs.exe
+
+# 使用自定义端口
+.\target\release\peerjs-server-rs.exe -p 8080
+.\target\release\peerjs-server-rs.exe --port 8080
 ```
 
 ## 🌐 GitHub Actions 多平台构建
@@ -82,6 +93,10 @@ cargo build --release
 | ARM64 | glibc | 树莓派 4/5 64位 |
 | ARM64 | musl | ARM64 musl 系统 |
 | ARM v6 | glibc | 树莓派 Zero/1 |
+| Windows x86_64 | - | Windows 64位 |
+| Windows x86 | - | Windows 32位 |
+| macOS x86_64 | - | macOS Intel |
+| macOS ARM64 | - | macOS Apple Silicon (M1/M2/M3) |
 
 访问 [Actions 页面](https://github.com/loginyourheart/SignalServer/actions) 下载对应平台的二进制文件。
 
