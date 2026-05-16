@@ -87,9 +87,9 @@ cargo build --release
 .\target\release\peerjs-server-rs.exe --port 8080
 ```
 
-## 🌐 GitHub Actions 多平台构建
+## 🌐 支持的平台
 
-本项目使用 GitHub Actions 自动为多种平台编译二进制文件：
+本项目支持多种平台，所有平台的预编译二进制文件均可从 Releases 页面下载：
 
 | 平台 | 架构 | 说明 |
 |------|------|------|
@@ -104,8 +104,6 @@ cargo build --release
 | Windows x86 | - | Windows 32位 |
 | macOS x86_64 | - | macOS Intel |
 | macOS ARM64 | - | macOS Apple Silicon (M1/M2/M3) |
-
-访问 [Actions 页面](https://github.com/loginyourheart/SignalServer/actions) 下载开发版本，或访问 [Releases 页面](https://github.com/loginyourheart/SignalServer/releases) 下载稳定版本。
 
 ## 📚 工作原理
 
