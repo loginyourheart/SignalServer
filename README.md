@@ -1,11 +1,52 @@
-peerjs server 本质上是一个ws 通过交换2个sdp
-信令服务器收集候选的ip列表(询问tun服务器知道自己公网ip,内网ip)
+# SignalServer
 
-## 使用教程
+🚀 一个高性能的 PeerJS 信令服务器，使用 Rust 语言实现。
+
+## 📖 项目简介
+
+SignalServer 是一个开源的 WebSocket 信令服务器，专为 [PeerJS](https://github.com/peers/peerjs) 设计。它实现了 WebRTC 信令功能，使得浏览器之间可以通过 P2P 方式建立连接，无需中央服务器中转媒体数据。
+
+### 核心功能
+
+- **WebSocket 信令服务**：支持客户端通过 WebSocket 进行 SDP 交换
+- **ICE 候选收集**：协助客户端收集公网和内网 IP 地址
+- **RESTful API**：提供 `/peerjs/id` 和 `/peerjs/peers` 端点
+- **多平台支持**：支持 x86_64、ARM 等多种架构
+- **命令行配置**：支持通过参数自定义端口
+
+## 🛠️ 技术栈
+
+- **开发语言**：Rust
+- **Web 框架**：Axum
+- **WebSocket**：tokio-tungstenite
+- **HTTP 中间件**：Tower HTTP
+- **命令行解析**：Clap
+
+## 📦 与官方 peerjs-server 功能对比
+
+| 功能 | 官方 peerjs-server (Node.js) | SignalServer (Rust) |
+|------|-----------------------------|---------------------|
+| WebSocket 信令 | ✅ | ✅ |
+| REST API (`/peerjs/id`) | ✅ | ✅ |
+| REST API (`/peerjs/peers`) | ✅ | ✅ |
+| 消息队列 | ✅ | ✅ |
+| 心跳检测 | ✅ | 🔄 开发中 |
+| 连接超时检查 | ✅ | 🔄 开发中 |
+| Key 认证 | ✅ | ✅ |
+| 并发连接限制 | ✅ | ✅ |
+| 跨平台编译 | ⚠️ 需 Node.js 环境 | ✅ GitHub Actions |
+| Docker 支持 | ✅ | 🔜 计划中 |
+
+## 🚀 快速开始
 
 ### 编译
 
 ```bash
+# 克隆项目
+git clone https://github.com/loginyourheart/SignalServer.git
+cd SignalServer
+
+# 编译
 cargo build --release
 ```
 
@@ -20,25 +61,51 @@ cargo build --release
 ./target/release/SignalServer --port 8080
 ```
 
-### GitHub Actions 多平台构建
+### Docker 部署
 
-本项目支持通过 GitHub Actions 为多种平台编译二进制文件：
+```bash
+# 构建镜像
+docker build -t signalserver .
+
+# 运行容器
+docker run -d -p 9000:9000 signalserver
+```
+
+## 🌐 GitHub Actions 多平台构建
+
+本项目使用 GitHub Actions 自动为多种平台编译二进制文件：
 
 | 平台 | 架构 | 说明 |
 |------|------|------|
 | Linux x86_64 | glibc | 标准 Linux 服务器 |
-| Linux x86_64 | musl | Alpine Linux 等 |
-| ARM v7 | glibc | 树莓派 3B/4 (glibc) |
-| ARM v7 | musl | **树莓派 3B + ImmortalWrt** (你的目标) |
+| Linux x86_64 | musl | Alpine Linux 等轻量级发行版 |
+| ARM v7 | glibc | 树莓派 3B/4 (Raspbian/Ubuntu) |
+| ARM v7 | musl | 树莓派 3B + ImmortalWrt |
 | ARM64 | glibc | 树莓派 4/5 64位 |
 | ARM64 | musl | ARM64 musl 系统 |
 | ARM v6 | glibc | 树莓派 Zero/1 |
 
-访问 Actions 页面下载对应平台的二进制文件：
-https://github.com/loginyourheart/SignalServer/actions
+访问 [Actions 页面](https://github.com/loginyourheart/SignalServer/actions) 下载对应平台的二进制文件。
 
-### Docker 部署示例
+## 📚 工作原理
 
-```bash
-docker run -d -p 9000:9000 signalserver
-```
+PeerJS 服务器的核心任务是协助两个浏览器客户端建立 P2P 连接：
+
+1. **SDP 交换**：两个客户端各自生成 SDP（Session Description Protocol）offer/answer
+2. **信令传输**：通过 WebSocket 将 SDP 从一方传递给另一方
+3. **ICE 候选**：收集候选的 IP 和端口信息（包括公网和内网）
+4. **连接建立**：客户端使用交换的 SDP 和 ICE 候选直接建立 P2P 连接
+
+## 🤝 贡献
+
+欢迎提交 Issue 和 Pull Request！
+
+## 📄 许可证
+
+本项目遵循 MIT 许可证。
+
+## 🔗 相关链接
+
+- [PeerJS 官方库](https://github.com/peers/peerjs)
+- [官方 peerjs-server](https://github.com/peers/peerjs-server)
+- [Axum Web 框架](https://github.com/tokio-rs/axum)
