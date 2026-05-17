@@ -125,13 +125,22 @@ async fn index() -> &'static str {
 async fn ws_upgrade_middleware(mut req: Request<Body>, next: Next) -> impl IntoResponse {
     let path = req.uri().path();
     
+    println!("[DEBUG] Request: {} {}", req.method(), path);
+    
     if path.starts_with("/peerjs") {
+        println!("[DEBUG] Headers:");
+        for (name, value) in req.headers() {
+            println!("[DEBUG]   {}: {:?}", name, value);
+        }
+        
         if let Some(upgrade) = req.headers().get(header::UPGRADE) {
             if upgrade.to_str().unwrap_or("").to_lowercase() == "websocket" {
+                println!("[DEBUG] Found Upgrade: websocket header!");
                 req.headers_mut().insert(
                     header::CONNECTION,
                     header::HeaderValue::from_static("upgrade")
                 );
+                println!("[DEBUG] Added Connection: upgrade header");
             }
         }
     }
