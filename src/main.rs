@@ -3,7 +3,7 @@ use axum::{extract::ws::{Message, WebSocket, WebSocketUpgrade}, response::Respon
 use std::net::SocketAddr;
 use std::sync::Arc;
 use axum::extract::{Query, State};
-use axum::http::{header, StatusCode};
+use axum::http::{header, Method, StatusCode, Request};
 use axum::response::{Html, IntoResponse};
 use serde::Deserialize;
 use tokio::net::TcpListener;
@@ -16,6 +16,8 @@ use clap::Parser;
 use crate::config::ServerConfig;
 use crate::room::{Room, RoomManage};
 use crate::wshandler::handle_socket;
+use axum::middleware::Next;
+use axum::body::Body;
 
 pub mod room;
 mod wshandler;
@@ -77,6 +79,7 @@ async fn main() {
         .route("/peerjs/peers", get(get_peers))
         .route("/peerjs", get(ws_handler))
         .with_state(state)
+        .layer(axum::middleware::from_fn(ws_upgrade_middleware))
         .layer(
             (
                 trace::TraceLayer::new_for_http()
@@ -117,6 +120,23 @@ async fn main() {
 
 async fn index() -> &'static str {
     "PeerJS Server is running"
+}
+
+async fn ws_upgrade_middleware(mut req: Request<Body>, next: Next) -> impl IntoResponse {
+    let path = req.uri().path();
+    
+    if path.starts_with("/peerjs") {
+        if let Some(upgrade) = req.headers().get(header::UPGRADE) {
+            if upgrade.to_str().unwrap_or("").to_lowercase() == "websocket" {
+                req.headers_mut().insert(
+                    header::CONNECTION,
+                    header::HeaderValue::from_static("upgrade")
+                );
+            }
+        }
+    }
+    
+    next.run(req).await
 }
 
 #[derive(Debug, Deserialize)]
