@@ -19,6 +19,7 @@ use crate::wshandler::handle_socket;
 use axum::middleware::Next;
 use axum::body::Body;
 use axum_server::tls_rustls::RustlsConfig;
+use tracing_subscriber::{fmt, EnvFilter, prelude::*};
 
 pub mod room;
 mod wshandler;
@@ -62,6 +63,8 @@ async fn main() {
         }
     };
     
+    init_tracing(&config.log_level);
+    
     println!("Server config:");
     println!("  key: {}", config.key);
     println!("  concurrent_limit: {}", config.concurrent_limit);
@@ -73,6 +76,8 @@ async fn main() {
         println!("  TLS cert: {}", config.tls_cert_path);
         println!("  TLS key: {}", config.tls_key_path);
     }
+    println!("  Log level: {}", config.log_level);
+    println!("  Debug request headers: {}", config.debug_request_headers);
     
     let state = AppState {
         room: Arc::new(Room::new()),
@@ -89,7 +94,7 @@ async fn main() {
         .layer(
             (
                 trace::TraceLayer::new_for_http()
-                    .make_span_with(trace::DefaultMakeSpan::new().include_headers(true))
+                    .make_span_with(trace::DefaultMakeSpan::new().include_headers(config.debug_request_headers))
                     .on_request(trace::DefaultOnRequest::new().level(tracing::Level::INFO))
                     .on_response(trace::DefaultOnResponse::new().level(tracing::Level::INFO)),
                 SetSensitiveHeadersLayer::new(std::iter::once(
@@ -149,22 +154,13 @@ async fn index() -> &'static str {
 async fn ws_upgrade_middleware(mut req: Request<Body>, next: Next) -> impl IntoResponse {
     let path = req.uri().path();
     
-    println!("[DEBUG] Request: {} {}", req.method(), path);
-    
     if path.starts_with("/peerjs") {
-        println!("[DEBUG] Headers:");
-        for (name, value) in req.headers() {
-            println!("[DEBUG]   {}: {:?}", name, value);
-        }
-        
         if let Some(upgrade) = req.headers().get(header::UPGRADE) {
             if upgrade.to_str().unwrap_or("").to_lowercase() == "websocket" {
-                println!("[DEBUG] Found Upgrade: websocket header!");
                 req.headers_mut().insert(
                     header::CONNECTION,
                     header::HeaderValue::from_static("upgrade")
                 );
-                println!("[DEBUG] Added Connection: upgrade header");
             }
         }
     }
@@ -206,3 +202,21 @@ async fn ws_handler( ws: WebSocketUpgrade, Query(query): Query<WsQuery>, State(s
 
     ws.on_upgrade(move |socket| handle_socket(socket, state, id, token))
 }
+
+fn init_tracing(log_level: &str) {
+    let filter = EnvFilter::try_from_default_env()
+        .unwrap_or_else(|_| EnvFilter::new(match log_level.to_lowercase().as_str() {
+            "trace" => "trace",
+            "debug" => "debug",
+            "info" => "info",
+            "warn" => "warn",
+            "error" => "error",
+            _ => "info",
+        }));
+    
+    tracing_subscriber::registry()
+        .with(fmt::layer())
+        .with(filter)
+        .init();
+}
+
