@@ -13,9 +13,20 @@ pub struct ServerConfig {
     pub check_interval: u64,
     pub cleanup_out_msgs: u64,
     pub expire_timeout: u64,
+    #[serde(default)]
     pub tls_enabled: bool,
+    #[serde(default = "default_cert_path")]
     pub tls_cert_path: String,
+    #[serde(default = "default_key_path")]
     pub tls_key_path: String,
+}
+
+fn default_cert_path() -> String {
+    "cert.pem".to_string()
+}
+
+fn default_key_path() -> String {
+    "key.pem".to_string()
 }
 
 impl Default for ServerConfig {
@@ -43,7 +54,11 @@ impl ServerConfig {
         if path.exists() {
             let content = fs::read_to_string(path)?;
             let config: ServerConfig = toml::from_str(&content)?;
+            
             println!("Loaded config from: {}", path.display());
+            println!("  TLS enabled: {}", config.tls_enabled);
+            
+            config.save_to_file(path)?;
             Ok(config)
         } else {
             println!("Config file not found, creating default: {}", path.display());
