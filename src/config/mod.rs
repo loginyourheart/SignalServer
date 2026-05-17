@@ -13,6 +13,9 @@ pub struct ServerConfig {
     pub check_interval: u64,
     pub cleanup_out_msgs: u64,
     pub expire_timeout: u64,
+    pub tls_enabled: bool,
+    pub tls_cert_path: String,
+    pub tls_key_path: String,
 }
 
 impl Default for ServerConfig {
@@ -26,6 +29,9 @@ impl Default for ServerConfig {
             check_interval: 300,
             cleanup_out_msgs: 10000,
             expire_timeout: 5000,
+            tls_enabled: false,
+            tls_cert_path: "cert.pem".to_string(),
+            tls_key_path: "key.pem".to_string(),
         }
     }
 }

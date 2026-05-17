@@ -18,6 +18,7 @@ use crate::room::{Room, RoomManage};
 use crate::wshandler::handle_socket;
 use axum::middleware::Next;
 use axum::body::Body;
+use axum_server::tls_rustls::RustlsConfig;
 
 pub mod room;
 mod wshandler;
@@ -67,10 +68,15 @@ async fn main() {
     println!("  allow_discovery: {}", config.allow_discovery);
     println!("  alive_timeout: {}ms", config.alive_timeout);
     println!("  check_interval: {}s", config.check_interval);
+    println!("  TLS enabled: {}", config.tls_enabled);
+    if config.tls_enabled {
+        println!("  TLS cert: {}", config.tls_cert_path);
+        println!("  TLS key: {}", config.tls_key_path);
+    }
     
     let state = AppState {
         room: Arc::new(Room::new()),
-        config,
+        config: config.clone(),
     };
 
     let app = Router::new()
@@ -112,10 +118,28 @@ async fn main() {
             )
         );
     let addr = SocketAddr::from(([0, 0, 0, 0], args.port));
-    println!("Server running on http://{}", addr);
-
-    let listener = TcpListener::bind(addr).await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    
+    if config.tls_enabled {
+        println!("Server running on https://{}", addr);
+        let tls_config = RustlsConfig::from_pem_file(
+            config.tls_cert_path.clone(),
+            config.tls_key_path.clone(),
+        )
+        .await
+        .unwrap_or_else(|e| {
+            eprintln!("Failed to load TLS certificates: {}", e);
+            std::process::exit(1);
+        });
+        
+        axum_server::bind_rustls(addr, tls_config)
+            .serve(app.into_make_service())
+            .await
+            .unwrap();
+    } else {
+        println!("Server running on http://{}", addr);
+        let listener = TcpListener::bind(addr).await.unwrap();
+        axum::serve(listener, app).await.unwrap();
+    }
 }
 
 async fn index() -> &'static str {
