@@ -22,6 +22,7 @@ tower-http = { version = "0.6.1", features = [
     "fs",
 ] }
 tracing = "0.1.41"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 tokio-util = "0.7.15"
 clap = { version = "4", features = ["derive"] }
 toml = "0.8"
