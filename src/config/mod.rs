@@ -3,8 +3,12 @@ use std::fs;
 use std::io;
 use std::path::Path;
 
+const CONFIG_VERSION: &str = "1.1.0";
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServerConfig {
+    #[serde(default = "default_config_version")]
+    pub config_version: String,
     #[serde(default = "default_key")]
     pub key: String,
     #[serde(default = "default_concurrent_limit")]
@@ -33,6 +37,7 @@ pub struct ServerConfig {
     pub debug_request_headers: bool,
 }
 
+fn default_config_version() -> String { CONFIG_VERSION.to_string() }
 fn default_key() -> String { "peerjs".to_string() }
 fn default_concurrent_limit() -> usize { 5000 }
 fn default_path() -> String { "/peerjs".to_string() }
@@ -47,6 +52,7 @@ fn default_log_level() -> String { "info".to_string() }
 impl Default for ServerConfig {
     fn default() -> Self {
         Self {
+            config_version: default_config_version(),
             key: default_key(),
             concurrent_limit: default_concurrent_limit(),
             path: default_path(),
@@ -70,13 +76,28 @@ impl ServerConfig {
         
         if path.exists() {
             let content = fs::read_to_string(path)?;
-            let config: ServerConfig = toml::from_str(&content)?;
+            
+            let mut config: ServerConfig = match toml::from_str(&content) {
+                Ok(cfg) => cfg,
+                Err(_) => {
+                    println!("Warning: Old config file format detected, migrating...");
+                    Self::migrate_old_config(&content, path)?
+                }
+            };
+            
+            if config.config_version != CONFIG_VERSION {
+                println!("Config version mismatch: found {}, expected {}", config.config_version, CONFIG_VERSION);
+                println!("Backing up old config and creating new one...");
+                Self::backup_config(path)?;
+                config.config_version = CONFIG_VERSION.to_string();
+                config.save_to_file(path)?;
+            }
             
             println!("Loaded config from: {}", path.display());
+            println!("  Config version: {}", config.config_version);
             println!("  TLS enabled: {}", config.tls_enabled);
             println!("  Log level: {}", config.log_level);
             
-            config.save_to_file(path)?;
             Ok(config)
         } else {
             println!("Config file not found, creating default: {}", path.display());
@@ -84,6 +105,56 @@ impl ServerConfig {
             config.save_to_file(path)?;
             Ok(config)
         }
+    }
+
+    fn migrate_old_config(content: &str, path: &Path) -> Result<Self, Box<dyn std::error::Error>> {
+        #[derive(Debug, Deserialize)]
+        struct OldConfig {
+            key: Option<String>,
+            concurrent_limit: Option<usize>,
+            path: Option<String>,
+            allow_discovery: Option<bool>,
+            alive_timeout: Option<u64>,
+            check_interval: Option<u64>,
+            cleanup_out_msgs: Option<u64>,
+            expire_timeout: Option<u64>,
+            tls_enabled: Option<bool>,
+            tls_cert_path: Option<String>,
+            tls_key_path: Option<String>,
+            log_level: Option<String>,
+            debug_request_headers: Option<bool>,
+        }
+        
+        let old_config: OldConfig = toml::from_str(content)?;
+        
+        Self::backup_config(path)?;
+        
+        let mut config = Self::default();
+        
+        if let Some(v) = old_config.key { config.key = v; }
+        if let Some(v) = old_config.concurrent_limit { config.concurrent_limit = v; }
+        if let Some(v) = old_config.path { config.path = v; }
+        if let Some(v) = old_config.allow_discovery { config.allow_discovery = v; }
+        if let Some(v) = old_config.alive_timeout { config.alive_timeout = v; }
+        if let Some(v) = old_config.check_interval { config.check_interval = v; }
+        if let Some(v) = old_config.cleanup_out_msgs { config.cleanup_out_msgs = v; }
+        if let Some(v) = old_config.expire_timeout { config.expire_timeout = v; }
+        if let Some(v) = old_config.tls_enabled { config.tls_enabled = v; }
+        if let Some(v) = old_config.tls_cert_path { config.tls_cert_path = v; }
+        if let Some(v) = old_config.tls_key_path { config.tls_key_path = v; }
+        if let Some(v) = old_config.log_level { config.log_level = v; }
+        if let Some(v) = old_config.debug_request_headers { config.debug_request_headers = v; }
+        
+        config.save_to_file(path)?;
+        
+        Ok(config)
+    }
+
+    fn backup_config(path: &Path) -> io::Result<()> {
+        let backup_path = path.with_extension(format!("toml.backup.{}", chrono::Local::now().format("%Y%m%d%H%M%S")));
+        fs::copy(path, &backup_path)?;
+        println!("Backed up config to: {}", backup_path.display());
+        Ok(())
     }
 
     pub fn save_to_file<P: AsRef<Path>>(&self, path: P) -> io::Result<()> {
@@ -98,10 +169,15 @@ r#"
 # ========================================
 # PeerJS Server Rust - 配置文件
 # ========================================
+# 配置文件版本: {}
+# ========================================
 
 # --------------------------
 # 基本配置
 # --------------------------
+
+# 配置文件版本（请勿手动修改）
+config_version = "{}"
 
 # PeerJS 认证密钥
 key = "{}"
@@ -154,6 +230,8 @@ log_level = "{}"
 # 是否打印请求头调试信息
 debug_request_headers = {}
 "#,
+        CONFIG_VERSION,
+        config.config_version,
         config.key,
         config.concurrent_limit,
         config.path,
