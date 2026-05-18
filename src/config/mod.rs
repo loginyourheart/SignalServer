@@ -179,7 +179,7 @@ r#"
 # 配置文件版本（请勿手动修改）
 config_version = "{}"
 
-# PeerJS 认证密钥
+# PeerJS 认证密钥（客户端连接时需要提供相同的 key）
 key = "{}"
 
 # 最大并发连接数
@@ -214,10 +214,10 @@ expire_timeout = {}
 # 是否启用 TLS（HTTPS/WSS）
 tls_enabled = {}
 
-# TLS 证书文件路径
+# TLS 证书文件路径（示例: /etc/ssl/certs/server.crt 或 ./certs/fullchain.pem）
 tls_cert_path = "{}"
 
-# TLS 私钥文件路径
+# TLS 私钥文件路径（示例: /etc/ssl/private/server.key 或 ./certs/privkey.pem）
 tls_key_path = "{}"
 
 # --------------------------

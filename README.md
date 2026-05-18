@@ -45,7 +45,6 @@
 | Key 认证 | ✅ | ✅ |
 | 并发连接限制 | ✅ | ✅ |
 | **HTTPS/TLS 原生支持** | ❌ 需反向代理 | ✅ **直接支持** |
-| HTTP/2 反向代理兼容 | ❌ 可能有问题 | ✅ 已修复 |
 | 跨平台编译 | ⚠️ 需 Node.js 环境 | ✅ GitHub Actions |
 | Docker 支持 | ✅ | ❌ 暂不支持 |
 
@@ -61,15 +60,13 @@
 | 日志系统 | ❌ 简单 println | ✅ Tracing 结构化日志 |
 | 配置版本管理 | ❌ 无 | ✅ 自动迁移与备份 |
 | 多平台编译 | ❌ 需手动 | ✅ GitHub Actions |
-| 代码质量 | ⚠️ 基础实现 | ✅ 完整重构 |
 
 ### 主要增强功能
 
 1. **原生 HTTPS/TLS 支持**：无需反向代理即可启用 HTTPS/WSS，提供更安全的连接
 2. **配置文件管理**：支持 TOML 配置，自动版本检测与迁移，旧配置自动备份
 3. **灵活的日志系统**：5 级日志级别，支持请求头调试
-4. **HTTP/2 兼容**：专门修复了 Lucky 等反向代理的 WebSocket 升级问题
-5. **命令行参数**：支持自定义端口和配置文件路径
+4. **命令行参数**：支持自定义端口和配置文件路径
 
 ## 📦 下载与安装
 
@@ -135,7 +132,7 @@ cargo build --release
 # 配置文件版本（请勿手动修改）
 config_version = "1.2.0"
 
-# PeerJS 认证密钥
+# PeerJS 认证密钥（客户端连接时需要提供相同的 key）
 key = "peerjs"
 
 # 最大并发连接数
@@ -170,11 +167,11 @@ expire_timeout = 5000
 # 是否启用 TLS（HTTPS/WSS）
 tls_enabled = false
 
-# TLS 证书文件路径
-tls_cert_path = "cert.pem"
+# TLS 证书文件路径（示例: /etc/ssl/certs/server.crt 或 ./certs/fullchain.pem）
+tls_cert_path = "./certs/fullchain.pem"
 
-# TLS 私钥文件路径
-tls_key_path = "key.pem"
+# TLS 私钥文件路径（示例: /etc/ssl/private/server.key 或 ./certs/privkey.pem）
+tls_key_path = "./certs/privkey.pem"
 
 # --------------------------
 # 日志配置
